@@ -1,5 +1,6 @@
 #import dependencies
 from flask import Flask
+from flask import jsonify
 import numpy as np 
 import datetime as dt 
 
@@ -44,7 +45,7 @@ def precipitation():
 
     """Return a list of all precipitation and date"""
     # Query all precipitation and date
-    results = session.query(Measurement.date,Measurement.prcp).all()
+    results = session.query(measurement.date,measurement.prcp).all()
 
     session.close()
 
@@ -64,7 +65,7 @@ def stations():
 
     """Return a list of all stations"""
     #query all stations
-    results = session.query(Station.id,Station.station,Station.name,Station.latitude,Station.longitude,Station.elevation).all()
+    results = session.query(station.id,station.station,station.name,station.latitude,station.longitude,station.elevation).all()
     session.close()
     all_station=[]
     for id,station,name,latitude,longitude,elevation in results:
@@ -85,13 +86,13 @@ def tempartureobs():
 
     """Return a list of all temparture observation"""
     #find date 1 year ago from last data point in the database
-    results_date=session.query(Measurement.date).order_by(Measurement.date.desc()).first()
+    results_date=session.query(measurement.date).order_by(measurement.date.desc()).first()
     datestart=list(np.ravel(results_date))[0]
-    latest_date=dt.datetime.strptime(datestart,"%Y-%m-%d")
-    date_from_lastyear=latest_date-dt.timedelta(days=366)
+    recent_date=dt.datetime.strptime(datestart,"%Y-%m-%d")
+    recent_date_ann=recent_date-dt.timedelta(days=366)
 #query to retrieve the data and precipitation scores
-    results=session.query(Measurement.date, Measurement.tobs).order_by(Measurement.date.desc()).\
-            filter(Measurement.date>=date_from_lastyear).all()
+    results=session.query(measurement.date, measurement.tobs).order_by(measurement.date.desc()).\
+            filter(measurement.date>=recent_date_ann).all()
     session.close()
     alltemps=[]
     for tobs,date in results:
@@ -117,8 +118,8 @@ def calc_temps(start, end):
         TMIN, TAVE, and TMAX
     """
     
-    results=session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-                filter(Measurement.date >= start).filter(Measurement.date <= end).all()
+    results=session.query(func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)).\
+                filter(measurement.date >= start).filter(measurement.date <= end).all()
     session.close()
     tempobs={}
     tempobs["Min_Temp"]=results[0][0]
@@ -139,8 +140,8 @@ def calc_temps_sd(start):
         TMIN, TAVE, and TMAX
     """
     
-    results=session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-                filter(Measurement.date >= start).all()
+    results=session.query(func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)).\
+                filter(measurement.date >= start).all()
     session.close()
     tempobs={}
     tempobs["Min_Temp"]=results[0][0]
